@@ -117,11 +117,24 @@ def main():
 
     download_or_generate_data(DATA_PATH)
 
-    # TODO: add preprocessing and training steps next
-    df = pd.read_csv(DATA_PATH)
-    print(f"\n[INFO] Dataset loaded: {df.shape[0]} rows, {df.shape[1]} columns")
-    print(f"[INFO] Failure rate: {df['Machine failure'].mean()*100:.2f}%")
-    print("\n[INFO] Data acquisition complete. Preprocessing coming next.")
+    from src.data_preprocessing import load_and_clean_data, engineer_features, prepare_datasets
+
+    print("\n[PREPROCESS] Loading and cleaning data...")
+    df = load_and_clean_data(DATA_PATH)
+    print(f"  {len(df)} records, columns: {df.columns.tolist()}")
+
+    print("[PREPROCESS] Engineering features...")
+    df = engineer_features(df)
+    print(f"  {df.shape[1]} columns after feature engineering")
+
+    print("[PREPROCESS] Train/test split...")
+    (X_train, X_test, y_train_b, y_test_b,
+     y_train_m, y_test_m, scaler, feature_names) = prepare_datasets(df)
+    print(f"  Train: {len(X_train)}, Test: {len(X_test)}")
+    print(f"  Failure rate (train): {y_train_b.mean()*100:.1f}%")
+    print(f"  Features: {feature_names}")
+
+    # TODO: model training next
 
 
 if __name__ == '__main__':
