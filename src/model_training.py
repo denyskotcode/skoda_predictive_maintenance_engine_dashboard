@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     roc_auc_score, classification_report, confusion_matrix,
@@ -22,6 +24,10 @@ def train_binary_classifier(X_train, y_train, X_test, y_test) -> dict:
     y_train = np.array(y_train)
     y_test = np.array(y_test)
 
+    neg_count = (y_train == 0).sum()
+    pos_count = (y_train == 1).sum()
+    scale_pos_weight = neg_count / max(pos_count, 1)
+
     models_def = {
         'Logistic Regression': LogisticRegression(
             class_weight='balanced', random_state=42, max_iter=1000
@@ -29,6 +35,16 @@ def train_binary_classifier(X_train, y_train, X_test, y_test) -> dict:
         'Random Forest': RandomForestClassifier(
             n_estimators=200, class_weight='balanced',
             random_state=42, n_jobs=-1
+        ),
+        'XGBoost': XGBClassifier(
+            scale_pos_weight=scale_pos_weight,
+            n_estimators=200, max_depth=5, learning_rate=0.1,
+            random_state=42, eval_metric='logloss',
+            verbosity=0, use_label_encoder=False
+        ),
+        'LightGBM': LGBMClassifier(
+            is_unbalance=True, n_estimators=200, max_depth=5,
+            learning_rate=0.1, random_state=42, verbose=-1
         ),
     }
 
@@ -77,8 +93,6 @@ def train_multiclass_classifier(X_train, y_train, X_test, y_test) -> dict:
     LightGBM multiclass classifier for failure type prediction.
     Classes: No Failure, TWF, HDF, PWF, OSF, RNF
     """
-    from lightgbm import LGBMClassifier
-
     y_train = np.array(y_train)
     y_test = np.array(y_test)
 
